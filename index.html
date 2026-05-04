@@ -1,0 +1,2543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист обхода - Офлайн версия</title>
+
+<!-- ExcelJS для работы с изображениями -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<style>
+:root { --main:#001355; }
+
+body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;
+    background:#f5f5f5;
+}
+
+.container{
+    max-width:1200px;
+    margin:0 auto;
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+/* ===== HEADER ===== */
+header{
+    background:var(--main);
+    color:#fff;
+    border-radius:8px;
+    padding:15px;
+}
+
+.header-top{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.logo{ height:42px; }
+
+.header-title{
+    flex:1;
+    text-align:center;
+}
+
+.header-title h1{
+    margin:0;
+    font-size:20px;
+}
+
+.header-title p{
+    margin:4px 0 0;
+    font-size:14px;
+    opacity:.9;
+}
+
+/* ===== ROUTE BLOCK ===== */
+.route-block{
+    margin-top:20px;
+    padding:15px;
+    border:2px solid var(--main);
+    border-radius:8px;
+    background:#f9f9f9;
+}
+
+.route-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
+
+label{
+    font-weight:600;
+    font-size:14px;
+    display:block;
+    margin-bottom:5px;
+}
+
+input, select, textarea, button{
+    width:100%;
+    padding:12px;
+    font-size:15px;
+    border-radius:6px;
+    border:2px solid #ddd;
+    box-sizing:border-box;
+}
+
+textarea{ resize:vertical; }
+
+button{
+    background:var(--main);
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    margin-bottom:5px;
+    transition:background 0.3s;
+}
+
+button:hover{
+    background:#002677;
+}
+
+button:disabled{
+    background:#cccccc;
+    cursor:not-allowed;
+}
+
+.actions{
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+    flex-wrap: wrap;
+}
+
+/* ===== REMARK ACCORDION ===== */
+.remark{
+    margin-top:15px;
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+    border:1px solid #e0e0e0;
+}
+
+.remark-header{
+    background:#e9ecf3;
+    padding:12px;
+    font-weight:700;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.remark-header:hover{
+    background:#dfe4f0;
+}
+
+.remark-body{
+    padding:15px;
+    background:#fff;
+}
+
+.remark.collapsed .remark-body{
+    display:none;
+}
+
+video{
+    width:100%;
+    max-width:400px;
+    border-radius:8px;
+    margin-bottom:10px;
+    border:2px solid #ddd;
+    background:#000;
+}
+
+.photo-preview{
+    margin:10px 0;
+    text-align:center;
+}
+
+.photo-preview img{
+    max-width:250px;
+    max-height:200px;
+    border-radius:4px;
+    margin:5px;
+    border:2px solid var(--main);
+    object-fit:contain;
+    cursor:zoom-in;
+    transition:transform 0.3s;
+}
+
+.photo-preview img:hover{
+    transform:scale(1.05);
+}
+
+.photo-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.photo-actions button {
+    width: auto;
+    padding: 8px 15px;
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Модальное окно для увеличения фото */
+.photo-modal {
+    display:none;
+    position:fixed;
+    z-index:1000;
+    left:0;
+    top:0;
+    width:100%;
+    height:100%;
+    background-color:rgba(0,0,0,0.9);
+    justify-content:center;
+    align-items:center;
+}
+
+.photo-modal-content {
+    max-width:90%;
+    max-height:90%;
+}
+
+.photo-modal-content img {
+    width:100%;
+    height:auto;
+    border-radius:8px;
+}
+
+.close-modal {
+    position:absolute;
+    top:20px;
+    right:35px;
+    color:#f1f1f1;
+    font-size:40px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.close-modal:hover {
+    color:#bbb;
+}
+
+/* ===== RECORDING STATUS ===== */
+.recording-status{
+    background:#fff3e0;
+    color:#ef6c00;
+    padding:10px 12px;
+    border-radius:4px;
+    margin:10px 0;
+    display:none;
+    font-size:14px;
+    border-left:4px solid #ff9800;
+}
+
+@keyframes pulse{
+    0%{ opacity:0.8; }
+    50%{ opacity:1; }
+    100%{ opacity:0.8; }
+}
+
+.recording-status.recording{
+    animation:pulse 1.5s infinite;
+}
+
+.voice-controls{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+}
+
+.voice-controls button{
+    flex:1;
+    min-width:120px;
+}
+
+/* Стили для режима замены текста */
+.text-replace-mode {
+    background: #e3f2fd !important;
+    color: #1565c0 !important;
+    border: 2px solid #1565c0 !important;
+}
+
+.replace-controls {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    display: none;
+}
+
+.replace-controls button {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* Стили для кнопки подсветки */
+.flash-button {
+    margin-bottom: 10px;
+}
+
+.flash-button.on {
+    background: #4CAF50;
+    font-weight: bold;
+}
+
+.flash-button.off {
+    background: #f44336;
+}
+
+/* Кнопки управления */
+.hash-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #eee;
+    flex-wrap: wrap;
+}
+
+.hash-controls button {
+    flex: 1;
+    font-size: 14px;
+    padding: 10px;
+    min-width: 150px;
+}
+
+.save-btn {
+    background: #28a745;
+}
+
+.save-btn:hover {
+    background: #218838;
+}
+
+.clear-btn {
+    background: #dc3545;
+}
+
+.clear-btn:hover {
+    background: #c82333;
+}
+
+.history-btn {
+    background: #2196F3;
+}
+
+.history-btn:hover {
+    background: #0b7dda;
+}
+
+.clear-history-btn {
+    background: #dc3545;
+}
+
+.clear-history-btn:hover {
+    background: #c82333;
+}
+
+/* ===== СТАТУСЫ СОХРАНЕНИЯ ===== */
+.save-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    transition: opacity 0.5s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.save-status.success {
+    background: #4CAF50;
+}
+
+.save-status.error {
+    background: #f44336;
+}
+
+.save-status.warning {
+    background: #ff9800;
+}
+
+.save-status.info {
+    background: #2196F3;
+}
+
+.offline-badge {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #ff9800;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: bold;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    animation: pulse 2s infinite;
+}
+
+.offline-badge.show {
+    display: block;
+}
+
+.backup-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 20px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background: white;
+}
+
+.backup-item {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+.backup-item:hover {
+    background: #f5f5f5;
+}
+
+.backup-item:last-child {
+    border-bottom: none;
+}
+
+.backup-item .date {
+    font-weight: bold;
+    color: var(--main);
+}
+
+.backup-item .stats {
+    font-size: 13px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.modal-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--main);
+}
+
+.modal-content button {
+    width: auto;
+    padding: 10px 20px;
+    margin-top: 15px;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.loading {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: white;
+}
+
+.loading-spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #001355;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+    .route-grid{ grid-template-columns:1fr; }
+    .voice-controls{ flex-direction:column; }
+    .voice-controls button{ width:100%; min-width:auto; }
+    video{ max-width:100%; }
+    .photo-preview img{ max-width:200px; max-height:150px; }
+    .photo-actions { flex-direction: column; }
+    .photo-actions button { width: 100%; }
+    .hash-controls { flex-direction: column; }
+    .actions { flex-direction: column; }
+    .save-status {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        text-align: center;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- Модальное окно для увеличения фото -->
+<div id="photoModal" class="photo-modal">
+    <span class="close-modal">&times;</span>
+    <div class="photo-modal-content">
+        <img id="modalImage" src="" alt="Увеличенное фото">
+    </div>
+</div>
+
+<!-- Модальное окно истории -->
+<div id="historyModal" class="photo-modal" style="background:rgba(0,0,0,0.5);">
+    <div class="modal-content">
+        <h3>📋 История сохраненных протоколов</h3>
+        <div id="backupList" class="backup-list">
+            <div style="text-align:center; padding:20px;">Загрузка...</div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="clearHistory()" class="clear-history-btn">🗑️ Очистить всю историю</button>
+            <button onclick="closeHistoryModal()">Закрыть</button>
+        </div>
+    </div>
+</div>
+
+<!-- Индикатор офлайн режима -->
+<div id="offlineBadge" class="offline-badge">⚠️ Офлайн-режим</div>
+
+<!-- Индикатор загрузки -->
+<div id="loading" class="loading">
+    <div class="loading-spinner"></div>
+    <div>Создание протокола с фотографиями...</div>
+</div>
+
+<div class="container">
+
+<header>
+    <div class="header-top">
+        <!-- Логотип будет добавлен отдельно -->
+        <div class="logo-placeholder" style="width:42px; height:42px; background: rgba(255,255,255,0.2); border-radius:4px;"></div>
+        <div class="header-title">
+            <h1>ЧЕК-ЛИСТ ОБХОДА</h1>
+            <p>Операционный контроль</p>
+        </div>
+    </div>
+</header>
+
+<div class="route-block">
+    <div class="route-grid">
+        <div>
+            <label>Дата обхода</label>
+            <input type="date" id="date" value="">
+        </div>
+        <div>
+            <label>Группа</label>
+            <select id="group">
+                <option>Группа 1</option>
+                <option>Группа 2</option>
+                <option>Группа 3</option>
+                <option>Группа 4</option>
+                <option>Группа 5</option>
+            </select>
+        </div>
+        <div>
+            <label>Маршрут обхода</label>
+            <select id="route">
+                <option>Участок гладкой трубы</option>
+                <option>Участок СВ</option>
+                <option>Участок НСИ</option>
+                <option>Складской комплекс</option>
+                <option>Транспортный цех</option>
+      <option>Участок переработки полимеров</option>
+      <option>ОТК и ИЛ</option>
+      <option>РМЦ</option>
+ <option>Котельная</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<div id="remarks"></div>
+
+<div class="actions">
+    <button onclick="addRemark()">➕ Добавить замечание</button>
+    <button onclick="exportExcelWithImages()">📊 Экспорт протокола в Excel</button>
+    <button onclick="manualSave()" class="save-btn">💾 Сохранить сейчас</button>
+    <button onclick="showBackups()" class="history-btn">📋 История</button>
+</div>
+
+<div class="hash-controls">
+    <button onclick="saveToHash()" class="save-btn">🔗 Сохранить в URL</button>
+    <button onclick="clearHash()" class="clear-btn">🗑️ Очистить черновик</button>
+</div>
+
+</div>
+
+<script>
+// =================== ВСТРОЕННЫЙ SERVICE WORKER ===================
+(function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'checklist-cache-v1';
+            const ASSETS_TO_CACHE = [
+                '/',
+                './',
+                location.origin + location.pathname,
+                'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js'
+            ];
+
+            self.addEventListener('install', (event) => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+                );
+            });
+
+            self.addEventListener('fetch', (event) => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then((response) => {
+                            if (response) {
+                                return response;
+                            }
+                            return fetch(event.request).catch(() => {
+                                if (event.request.url.includes('exceljs') || 
+                                    event.request.url.includes('FileSaver')) {
+                                    return new Response(
+                                        'Библиотека недоступна в офлайн-режиме. Экспорт будет доступен после восстановления соединения.',
+                                        { status: 503, statusText: 'Service Unavailable' }
+                                    );
+                                }
+                            });
+                        })
+                );
+            });
+
+            self.addEventListener('activate', (event) => {
+                event.waitUntil(
+                    caches.keys().then((cacheNames) => {
+                        return Promise.all(
+                            cacheNames.map((cacheName) => {
+                                if (cacheName !== CACHE_NAME) {
+                                    return caches.delete(cacheName);
+                                }
+                            })
+                        );
+                    })
+                );
+            });
+        `;
+
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+
+        navigator.serviceWorker.register(swUrl)
+            .then(registration => {
+                console.log('ServiceWorker зарегистрирован успешно');
+            })
+            .catch(error => {
+                console.log('Ошибка регистрации ServiceWorker:', error);
+            });
+
+        URL.revokeObjectURL(swUrl);
+    }
+})();
+
+// =================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ===================
+let remarkCount = 0;
+const recognitions = new Map();
+const voiceStates = new Map();
+const flashStates = new Map();
+let cameraActive = false; // Флаг для отслеживания активности камеры
+
+// Класс для работы с IndexedDB
+class OfflineStorage {
+    constructor() {
+        this.dbName = 'ChecklistDB';
+        this.dbVersion = 2;
+        this.db = null;
+    }
+
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+                this.db = request.result;
+                resolve();
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                if (!db.objectStoreNames.contains('protocols')) {
+                    const store = db.createObjectStore('protocols', { keyPath: 'id', autoIncrement: true });
+                    store.createIndex('date', 'date', { unique: false });
+                    store.createIndex('savedAt', 'savedAt', { unique: false });
+                }
+                
+                if (!db.objectStoreNames.contains('photos')) {
+                    const photoStore = db.createObjectStore('photos', { keyPath: 'id' });
+                    photoStore.createIndex('protocolId', 'protocolId', { unique: false });
+                }
+            };
+        });
+    }
+
+    async saveProtocol(protocolData) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['protocols', 'photos'], 'readwrite');
+            const protocolStore = tx.objectStore('protocols');
+            const photoStore = tx.objectStore('photos');
+            
+            const protocol = {
+                ...protocolData,
+                savedAt: new Date().toISOString(),
+                id: protocolData.id || `protocol_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+            
+            const photoPromises = [];
+            
+            if (protocol.remarks) {
+                protocol.remarks.forEach((remark, index) => {
+                    if (remark.photoData || remark.photoBlob) {
+                        const photoId = `photo_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
+                        
+                        const photoRequest = photoStore.add({
+                            id: photoId,
+                            protocolId: protocol.id,
+                            remarkIndex: index,
+                            photoData: remark.photoData,
+                            photoBlob: remark.photoBlob
+                        });
+                        
+                        photoPromises.push(new Promise((resolvePhoto) => {
+                            photoRequest.onsuccess = () => {
+                                remark.photoId = photoId;
+                                delete remark.photoData;
+                                delete remark.photoBlob;
+                                resolvePhoto();
+                            };
+                        }));
+                    }
+                });
+            }
+            
+            Promise.all(photoPromises).then(() => {
+                const request = protocolStore.add(protocol);
+                
+                request.onsuccess = () => {
+                    resolve(protocol.id);
+                };
+                
+                request.onerror = () => reject(request.error);
+            });
+            
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async loadLastProtocol() {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['protocols', 'photos'], 'readonly');
+            const protocolStore = tx.objectStore('protocols');
+            const photoStore = tx.objectStore('photos');
+            
+            const index = protocolStore.index('savedAt');
+            const protocols = [];
+            
+            const request = index.openCursor(null, 'prev');
+            
+            request.onsuccess = (event) => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    protocols.push(cursor.value);
+                    if (protocols.length >= 1) {
+                        return;
+                    }
+                    cursor.continue();
+                }
+            };
+            
+            tx.oncomplete = async () => {
+                if (protocols.length === 0) {
+                    resolve(null);
+                    return;
+                }
+                
+                const lastProtocol = protocols[0];
+                
+                if (lastProtocol.remarks) {
+                    for (let i = 0; i < lastProtocol.remarks.length; i++) {
+                        const remark = lastProtocol.remarks[i];
+                        if (remark.photoId) {
+                            const photoRequest = photoStore.get(remark.photoId);
+                            
+                            await new Promise((resolvePhoto) => {
+                                photoRequest.onsuccess = () => {
+                                    const photo = photoRequest.result;
+                                    if (photo) {
+                                        remark.photoData = photo.photoData;
+                                        remark.photoBlob = photo.photoBlob;
+                                    }
+                                    resolvePhoto();
+                                };
+                            });
+                        }
+                    }
+                }
+                
+                resolve(lastProtocol);
+            };
+            
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async getAllProtocols() {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction('protocols', 'readonly');
+            const store = tx.objectStore('protocols');
+            const request = store.getAll();
+            
+            request.onsuccess = () => {
+                resolve(request.result);
+            };
+            
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getProtocolWithPhotos(protocolId) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['protocols', 'photos'], 'readonly');
+            const protocolStore = tx.objectStore('protocols');
+            const photoStore = tx.objectStore('photos');
+            
+            const request = protocolStore.get(protocolId);
+            
+            request.onsuccess = async () => {
+                const protocol = request.result;
+                
+                if (protocol && protocol.remarks) {
+                    for (let i = 0; i < protocol.remarks.length; i++) {
+                        const remark = protocol.remarks[i];
+                        if (remark.photoId) {
+                            const photoRequest = photoStore.get(remark.photoId);
+                            
+                            await new Promise((resolvePhoto) => {
+                                photoRequest.onsuccess = () => {
+                                    const photo = photoRequest.result;
+                                    if (photo) {
+                                        remark.photoData = photo.photoData;
+                                        remark.photoBlob = photo.photoBlob;
+                                    }
+                                    resolvePhoto();
+                                };
+                            });
+                        }
+                    }
+                }
+                
+                resolve(protocol);
+            };
+            
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    // Метод для очистки всей истории
+    async clearAllProtocols() {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(['protocols', 'photos'], 'readwrite');
+            const protocolStore = tx.objectStore('protocols');
+            const photoStore = tx.objectStore('photos');
+            
+            const protocolRequest = protocolStore.clear();
+            const photoRequest = photoStore.clear();
+            
+            Promise.all([
+                new Promise((resolve) => { protocolRequest.onsuccess = resolve; }),
+                new Promise((resolve) => { photoRequest.onsuccess = resolve; })
+            ]).then(() => {
+                resolve();
+            }).catch((error) => {
+                reject(error);
+            });
+        });
+    }
+}
+
+// Класс для автосохранения
+class AutoSaveManager {
+    constructor(storage) {
+        this.storage = storage;
+        this.saveTimeout = null;
+        this.pendingChanges = false;
+        this.currentProtocolId = null;
+        this.autoSaveInterval = null;
+    }
+
+    startAutoSave(interval = 30000) {
+        this.autoSaveInterval = setInterval(() => {
+            if (this.pendingChanges) {
+                this.saveCurrentState();
+            }
+        }, interval);
+    }
+
+    stopAutoSave() {
+        if (this.autoSaveInterval) {
+            clearInterval(this.autoSaveInterval);
+        }
+    }
+
+    async saveCurrentState() {
+        const data = this.collectFormData();
+        
+        try {
+            if (this.currentProtocolId) {
+                data.id = this.currentProtocolId;
+            }
+            
+            const protocolId = await this.storage.saveProtocol(data);
+            this.currentProtocolId = protocolId;
+            this.pendingChanges = false;
+            
+            this.updateSaveStatus('✅ Протокол успешно сохранен', 'success');
+        } catch (error) {
+            console.error('Ошибка автосохранения:', error);
+            this.updateSaveStatus('❌ Ошибка сохранения протокола', 'error');
+            
+            this.saveToLocalStorage(data);
+        }
+    }
+
+    saveToLocalStorage(data) {
+        try {
+            const backup = JSON.stringify({
+                data: data,
+                timestamp: new Date().toISOString()
+            });
+            
+            let backups = [];
+            const stored = localStorage.getItem('checklist_backups');
+            if (stored) {
+                backups = JSON.parse(stored);
+            }
+            
+            backups.unshift({
+                id: `backup_${Date.now()}`,
+                data: data,
+                timestamp: new Date().toISOString()
+            });
+            
+            if (backups.length > 5) {
+                backups = backups.slice(0, 5);
+            }
+            
+            localStorage.setItem('checklist_backups', JSON.stringify(backups));
+            this.updateSaveStatus('⚠️ Сохранено в localStorage (резервная копия)', 'warning');
+        } catch (e) {
+            console.error('Не удалось сохранить даже в localStorage:', e);
+            this.updateSaveStatus('❌ Ошибка: нет места для сохранения', 'error');
+        }
+    }
+
+    collectFormData() {
+        const data = {
+            date: document.getElementById('date').value,
+            group: document.getElementById('group').value,
+            route: document.getElementById('route').value,
+            remarks: []
+        };
+        
+        document.querySelectorAll('.remark').forEach((remark, index) => {
+            const remarkId = remark.id;
+            const remarkNumber = index + 1;
+            
+            const description = document.getElementById(`description-${remarkId}`)?.value || '';
+            
+            const responsibleSelect = document.getElementById(`responsible-${remarkNumber}`);
+            const customResponsibleInput = document.getElementById(`custom-responsible-${remarkId}`);
+            let responsible = '';
+            if (responsibleSelect && responsibleSelect.value === "custom") {
+                responsible = customResponsibleInput?.value || '';
+            } else if (responsibleSelect) {
+                responsible = responsibleSelect.value || '';
+            }
+            
+            const locationSelect = document.getElementById(`location-${remarkId}`);
+            const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+            let location = '';
+            if (locationSelect && locationSelect.value === "custom") {
+                location = customLocationInput?.value || '';
+            } else if (locationSelect) {
+                location = locationSelect.value || '';
+            }
+            
+            const remarkData = {
+                index: index,
+                description: description,
+                responsible: responsible,
+                location: location,
+                photoData: remark.getAttribute('data-photo-base64'),
+                photoBlob: remark.getAttribute('data-photo-blob')
+            };
+            
+            data.remarks.push(remarkData);
+        });
+        
+        return data;
+    }
+
+    updateSaveStatus(text, type) {
+        let statusDiv = document.getElementById('save-status');
+        if (!statusDiv) {
+            statusDiv = document.createElement('div');
+            statusDiv.id = 'save-status';
+            document.body.appendChild(statusDiv);
+        }
+        
+        statusDiv.textContent = text;
+        statusDiv.className = `save-status ${type}`;
+        statusDiv.style.opacity = '1';
+        
+        setTimeout(() => {
+            statusDiv.style.opacity = '0';
+        }, 5000);
+    }
+}
+
+// Глобальные переменные
+let offlineStorage;
+let autoSaveManager;
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', async function() {
+    const modal = document.getElementById('photoModal');
+    const closeBtn = document.querySelector('.close-modal');
+    
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    }
+    
+    modal.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    const dateInput = document.getElementById('date');
+    if (!dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    try {
+        offlineStorage = new OfflineStorage();
+        await offlineStorage.init();
+        console.log('IndexedDB инициализирована');
+        
+        autoSaveManager = new AutoSaveManager(offlineStorage);
+        
+        updateOnlineStatus();
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        await restoreLastProtocol();
+        
+        autoSaveManager.startAutoSave();
+    } catch (error) {
+        console.error('Ошибка инициализации:', error);
+    }
+});
+
+// Функция для увеличения фото
+function zoomPhoto(imgElement) {
+    const modal = document.getElementById('photoModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imgElement.src;
+    modal.style.display = 'flex';
+}
+
+function collapseAll(){
+    document.querySelectorAll(".remark").forEach(r => r.classList.add("collapsed"));
+}
+
+function toggleRemark(header){
+    const remark = header.parentElement;
+    collapseAll();
+    remark.classList.remove("collapsed");
+}
+
+function closeRemark(button){
+    const remark = button.closest(".remark");
+    const video = remark.querySelector('video');
+    
+    if (video && video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
+    
+    const remarkId = remark.id;
+    if (recognitions.has(remarkId)) {
+        const rec = recognitions.get(remarkId);
+        if (rec) {
+            rec.stop();
+        }
+        recognitions.delete(remarkId);
+    }
+    
+    voiceStates.delete(remarkId);
+    flashStates.delete(remarkId);
+    
+    remark.remove();
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+function updateLocationSelect(remarkId) {
+    const routeSelect = document.getElementById('route');
+    const locationSelect = document.getElementById(`location-${remarkId}`);
+    const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+    
+    if (!locationSelect) return;
+    
+    const selectedRoute = routeSelect.value;
+    let options = [];
+    
+    if (selectedRoute.includes("Маршрут 1 — Складской комплекс первой территории")) {
+        options = ['Сектор 1', 'Сектор 2', 'Сектор 3', 'Сектор 4', 'Сектор 5', 'Сектор 6', 'Сектор 7', 'Сектор 8'];
+    } else if (selectedRoute.includes("Маршрут 2 — ЦПТ( Сектора с 10 по 15)")) {
+        options = ['Сектор 10', 'Сектор 11', 'Сектор 12', 'Сектор 13', 'Сектор 14', 'Сектор 15'];
+    } else if (selectedRoute.includes("Маршрут 3 — АБК, ИЛ, ОТК, ТС, СГЭ - первой площадки")) {
+        options = ['АБК', 'ИЛ', 'ОТК', 'ТС', 'СГЭ'];
+    } else if (selectedRoute.includes("Маршрут 4 — Складской комплекс второй территории")) {
+        options = ['Сектор 1', 'Сектор 2', 'Сектор 3', 'Сектор 4', 'Сектор 5', 'Сектор 6', 'Сектор 7', 'Сектор 8', 'Сектор 9'];
+    } else if (selectedRoute.includes("Маршрут 5 — УПАТ,УПИТ,УПНИ")) {
+        options = ['УПАТ', 'УПИТ', 'УПНИ'];
+    }
+    
+    const currentValue = locationSelect.value;
+    
+    locationSelect.innerHTML = '';
+    
+    options.forEach(option => {
+        const opt = document.createElement('option');
+        opt.value = option;
+        opt.textContent = option;
+        locationSelect.appendChild(opt);
+    });
+    
+    const customOpt = document.createElement('option');
+    customOpt.value = 'custom';
+    customOpt.textContent = 'Ввести вручную';
+    locationSelect.appendChild(customOpt);
+    
+    if (currentValue && options.includes(currentValue)) {
+        locationSelect.value = currentValue;
+    }
+    
+    if (locationSelect.value === 'custom') {
+        customLocationInput.style.display = 'block';
+    } else {
+        customLocationInput.style.display = 'none';
+    }
+}
+
+function toggleCustomLocation(select, remarkId) {
+    const customInput = document.getElementById(`custom-location-${remarkId}`);
+    if (select.value === 'custom') {
+        customInput.style.display = 'block';
+        customInput.focus();
+    } else {
+        customInput.style.display = 'none';
+    }
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+function toggleFlash(remarkNumber) {
+    const remarkId = `remark-${remarkNumber}`;
+    const flashButton = document.getElementById(`flash-btn-${remarkNumber}`);
+    
+    const currentState = flashStates.get(remarkId) || false;
+    const newState = !currentState;
+    
+    flashStates.set(remarkId, newState);
+    
+    if (newState) {
+        flashButton.textContent = '🌙 Выключить подсветку';
+        flashButton.classList.remove('off');
+        flashButton.classList.add('on');
+    } else {
+        flashButton.textContent = '🔆 Включить подсветку';
+        flashButton.classList.remove('on');
+        flashButton.classList.add('off');
+    }
+    
+    applyFlashSettings(remarkNumber);
+}
+
+function applyFlashSettings(remarkNumber) {
+    const videoId = `video-${remarkNumber}`;
+    const video = document.getElementById(videoId);
+    
+    if (!video || !video.srcObject) return;
+    
+    const remarkId = `remark-${remarkNumber}`;
+    const useFlash = flashStates.get(remarkId) || false;
+    
+    const stream = video.srcObject;
+    const track = stream.getVideoTracks()[0];
+    
+    if (track && track.getCapabilities) {
+        const capabilities = track.getCapabilities();
+        
+        if (capabilities.torch) {
+            track.applyConstraints({
+                advanced: [{torch: useFlash}]
+            }).catch(err => {
+                console.error('Ошибка при изменении настроек подсветки:', err);
+            });
+        }
+    }
+}
+
+function deletePhoto(remarkNumber) {
+    const remarkId = `remark-${remarkNumber}`;
+    const remark = document.getElementById(remarkId);
+    const preview = document.getElementById(`photo-preview-${remarkId}`);
+    const photoActions = document.getElementById(`photo-actions-${remarkId}`);
+    const photoBtn = document.getElementById(`photo-btn-${remarkNumber}`);
+    
+    preview.innerHTML = '';
+    photoActions.style.display = 'none';
+    
+    remark.removeAttribute('data-photo-base64');
+    remark.removeAttribute('data-photo-blob');
+    remark.removeAttribute('data-photo-width');
+    remark.removeAttribute('data-photo-height');
+    remark.removeAttribute('data-photo-orientation');
+    
+    photoBtn.textContent = '📷 Сделать фото';
+    photoBtn.disabled = false;
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+function retakePhoto(remarkNumber) {
+    deletePhoto(remarkNumber);
+    takePhoto(remarkNumber);
+}
+
+function addRemark(){
+    collapseAll();
+    remarkCount++;
+
+    const remarkId = `remark-${remarkCount}`;
+    
+    const r = document.createElement("div");
+    r.className = "remark";
+    r.id = remarkId;
+
+    r.innerHTML = `
+        <div class="remark-header" onclick="toggleRemark(this)">
+            <span>Замечание №${remarkCount}</span>
+            <button onclick="closeRemark(this)" style="width:auto; padding:6px 12px; background:#dc3545; font-size:12px;">✕ Удалить</button>
+        </div>
+        <div class="remark-body">
+
+            <label>Фото (камера)</label>
+            <video id="video-${remarkCount}" autoplay playsinline></video>
+            
+            <button onclick="toggleFlash(${remarkCount})" id="flash-btn-${remarkCount}" class="flash-button off">🔆 Включить подсветку</button>
+            
+            <button onclick="takePhoto(${remarkCount})" id="photo-btn-${remarkCount}">📷 Сделать фото</button>
+            <div class="photo-preview" id="photo-preview-${remarkId}"></div>
+            <div class="photo-actions" id="photo-actions-${remarkId}" style="display:none;">
+                <button onclick="retakePhoto(${remarkCount})" style="background:#ff9800;">🔄 Переснять фото</button>
+                <button onclick="deletePhoto(${remarkCount})" style="background:#dc3545;">🗑️ Удалить фото</button>
+            </div>
+
+            <label>Голосовое описание</label>
+            <div class="recording-status" id="status-${remarkId}"></div>
+            <div class="voice-controls">
+                <button onclick="startVoiceInput('${remarkId}')" id="start-btn-${remarkId}">🎙 Начать голосовой ввод</button>
+                <button onclick="stopVoiceInput('${remarkId}')" id="stop-btn-${remarkId}" disabled>⏹ Остановить</button>
+                <button onclick="clearVoiceInput('${remarkId}')" id="clear-btn-${remarkId}">🗑 Очистить текст</button>
+            </div>
+            
+            <div class="replace-controls" id="replace-controls-${remarkId}">
+                <button onclick="addToExistingText('${remarkId}')">➕ Добавить к тексту</button>
+                <button onclick="replaceExistingText('${remarkId}')">🔄 Заменить текст</button>
+            </div>
+
+            <label>Описание</label>
+            <textarea id="description-${remarkId}" placeholder="Текст будет автоматически заполнен при голосовом вводе..." onchange="onFieldChange()"></textarea>
+
+            <label>Ответственный</label>
+            <select id="responsible-${remarkCount}" onchange="toggleCustomInput(this, '${remarkId}'); onFieldChange()">
+                <option>Новиков В.В.</option>
+                <option>Свинин Э.Е.</option>
+                <option>Тимофеев А.В.</option>
+                <option>Савранов А.В.</option>
+                <option>Эпов Д.В.</option>
+                <option>Мосин А.Н.</option>
+                <option>Трубачев Ю.А.</option>
+                <option value="custom">Другие</option>
+            </select>
+            <input id="custom-responsible-${remarkId}" placeholder="Ввести вручную" style="display:none; margin-top:5px;" onchange="onFieldChange()">
+
+            <label>Место обнаружения</label>
+            <select id="location-${remarkId}" onchange="toggleCustomLocation(this, '${remarkId}'); onFieldChange()">
+                <!-- Опции будут заполнены автоматически -->
+            </select>
+            <input id="custom-location-${remarkId}" placeholder="Ввести вручную" style="display:none; margin-top:5px;" onchange="onFieldChange()">
+
+        </div>
+    `;
+
+    document.getElementById("remarks").appendChild(r);
+
+    // Инициализация камеры ТОЛЬКО при добавлении замечания
+    initCamera(remarkCount);
+    
+    updateLocationSelect(remarkId);
+    
+    flashStates.set(remarkId, false);
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+document.getElementById('route').addEventListener('change', function() {
+    for (let i = 1; i <= remarkCount; i++) {
+        const remarkId = `remark-${i}`;
+        if (document.getElementById(remarkId)) {
+            updateLocationSelect(remarkId);
+        }
+    }
+    onFieldChange();
+});
+
+function onFieldChange() {
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+document.getElementById('date').addEventListener('change', onFieldChange);
+document.getElementById('group').addEventListener('change', onFieldChange);
+
+function initCamera(remarkNumber) {
+    const videoId = `video-${remarkNumber}`;
+    const video = document.getElementById(videoId);
+    
+    if (!video) return;
+    
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
+    
+    const constraints = {
+        video: { 
+            facingMode: "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        }
+    };
+    
+    navigator.mediaDevices.getUserMedia(constraints)
+    .then(stream => {
+        video.srcObject = stream;
+        video.play().catch(e => console.error("Ошибка воспроизведения видео:", e));
+        
+        setTimeout(() => applyFlashSettings(remarkNumber), 500);
+    })
+    .catch(err => {
+        console.error("Ошибка доступа к камере:", err);
+        video.style.display = "none";
+        const btn = document.getElementById(`photo-btn-${remarkNumber}`);
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "📷 Камера недоступна";
+        }
+        
+        const flashBtn = document.getElementById(`flash-btn-${remarkNumber}`);
+        if (flashBtn) flashBtn.disabled = true;
+    });
+}
+
+function toggleCustomInput(select, remarkId) {
+    const customInput = document.getElementById(`custom-responsible-${remarkId}`);
+    customInput.style.display = select.value === "custom" ? "block" : "none";
+}
+
+function takePhoto(remarkNumber) {
+    const videoId = `video-${remarkNumber}`;
+    const video = document.getElementById(videoId);
+    const remarkId = `remark-${remarkNumber}`;
+    const preview = document.getElementById(`photo-preview-${remarkId}`);
+    const remark = document.getElementById(remarkId);
+    const photoActions = document.getElementById(`photo-actions-${remarkId}`);
+    
+    if (!video || !video.videoWidth || video.videoWidth === 0) {
+        alert("Камера не готова. Подождите, пока камера загрузится.");
+        return;
+    }
+    
+    const useFlash = flashStates.get(remarkId) || false;
+    let flashPromise = Promise.resolve();
+    
+    if (useFlash) {
+        const stream = video.srcObject;
+        const track = stream.getVideoTracks()[0];
+        
+        if (track && track.getCapabilities && track.getCapabilities().torch) {
+            flashPromise = track.applyConstraints({
+                advanced: [{torch: true}]
+            });
+        }
+    }
+    
+    flashPromise.then(() => {
+        return new Promise(resolve => setTimeout(resolve, 300));
+    }).then(() => {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        const videoWidth = video.videoWidth;
+        const videoHeight = video.videoHeight;
+        
+        const isPortrait = videoHeight > videoWidth;
+        
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        
+        context.drawImage(video, 0, 0, videoWidth, videoHeight);
+        
+        remark.setAttribute('data-photo-orientation', isPortrait ? 'portrait' : 'landscape');
+        remark.setAttribute('data-photo-width', videoWidth);
+        remark.setAttribute('data-photo-height', videoHeight);
+        
+        const photoDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        
+        const img = document.createElement('img');
+        img.src = photoDataUrl;
+        img.alt = `Фото замечания ${remarkNumber}`;
+        
+        if (isPortrait) {
+            img.style.maxWidth = '200px';
+            img.style.maxHeight = '300px';
+        } else {
+            img.style.maxWidth = '300px';
+            img.style.maxHeight = '200px';
+        }
+        img.style.objectFit = 'contain';
+        
+        img.onclick = function() { zoomPhoto(this); };
+        
+        preview.innerHTML = '';
+        preview.appendChild(img);
+        
+        photoActions.style.display = 'flex';
+        
+        remark.setAttribute('data-photo-base64', photoDataUrl);
+        
+        canvas.toBlob(function(blob) {
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                remark.setAttribute('data-photo-blob', reader.result);
+                
+                if (autoSaveManager) {
+                    autoSaveManager.pendingChanges = true;
+                }
+            };
+            reader.readAsDataURL(blob);
+        }, 'image/jpeg', 0.9);
+        
+        const btn = document.getElementById(`photo-btn-${remarkNumber}`);
+        btn.textContent = '📷 Фото сделано';
+        btn.disabled = true;
+        
+        if (useFlash) {
+            const stream = video.srcObject;
+            const track = stream.getVideoTracks()[0];
+            
+            if (track && track.getCapabilities && track.getCapabilities().torch) {
+                setTimeout(() => {
+                    track.applyConstraints({
+                        advanced: [{torch: useFlash}]
+                    });
+                }, 500);
+            }
+        }
+    }).catch(error => {
+        console.error("Ошибка при съемке фото:", error);
+        alert("Ошибка при съемке фото. Попробуйте еще раз.");
+    });
+}
+
+// РАСПОЗНАВАНИЕ РЕЧИ - микрофон включается ТОЛЬКО при нажатии кнопки
+function startVoiceInput(remarkId) {
+    const statusDiv = document.getElementById(`status-${remarkId}`);
+    const startBtn = document.getElementById(`start-btn-${remarkId}`);
+    const stopBtn = document.getElementById(`stop-btn-${remarkId}`);
+    const clearBtn = document.getElementById(`clear-btn-${remarkId}`);
+    const textarea = document.getElementById(`description-${remarkId}`);
+    const replaceControls = document.getElementById(`replace-controls-${remarkId}`);
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        alert("Ваш браузер не поддерживает распознавание речи. Пожалуйста, используйте Chrome или Edge.");
+        return;
+    }
+    
+    if (recognitions.has(remarkId)) {
+        const oldRec = recognitions.get(remarkId);
+        if (oldRec) {
+            oldRec.stop();
+        }
+        recognitions.delete(remarkId);
+    }
+    
+    if (!voiceStates.has(remarkId)) {
+        voiceStates.set(remarkId, {
+            currentText: textarea.value || '',
+            tempText: '',
+            isRecording: false,
+            shouldReplace: false,
+            lastFinalText: '',
+            lastProcessedText: '',
+            duplicatePrevention: []
+        });
+    }
+    
+    const state = voiceStates.get(remarkId);
+    state.tempText = '';
+    state.isRecording = true;
+    state.shouldReplace = false;
+    state.lastFinalText = '';
+    state.lastProcessedText = '';
+    state.duplicatePrevention = [];
+    
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+    
+    function isDuplicateText(newText, existingText) {
+        if (!newText || !existingText) return false;
+        
+        const newWords = newText.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        const existingWords = existingText.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+        
+        if (newWords.length < 2 || existingWords.length < 2) return false;
+        
+        let duplicateCount = 0;
+        for (const word of newWords) {
+            if (existingWords.includes(word)) {
+                duplicateCount++;
+            }
+        }
+        
+        return duplicateCount / newWords.length > 0.7;
+    }
+    
+    recognition.onstart = function() {
+        statusDiv.style.display = 'block';
+        statusDiv.textContent = '🎤 Слушаю... Говорите четко и медленно';
+        statusDiv.style.background = "#fff3e0";
+        statusDiv.style.color = "#ef6c00";
+        statusDiv.classList.add('recording');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        clearBtn.disabled = true;
+        replaceControls.style.display = 'none';
+        
+        if (textarea.value.trim()) {
+            textarea.classList.add('text-replace-mode');
+        }
+    };
+    
+    recognition.onresult = function(event) {
+        const state = voiceStates.get(remarkId);
+        if (!state) return;
+        
+        let finalTranscript = '';
+        let interimTranscript = '';
+        
+        for (let i = 0; i < event.results.length; i++) {
+            const result = event.results[i];
+            const transcript = result[0].transcript.trim();
+            
+            if (result.isFinal) {
+                finalTranscript += (finalTranscript ? ' ' : '') + transcript;
+            } else {
+                interimTranscript += (interimTranscript ? ' ' : '') + transcript;
+            }
+        }
+        
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            if (finalTranscript) {
+                const processedText = finalTranscript.trim();
+                
+                if (processedText && processedText !== state.lastProcessedText) {
+                    let isDuplicate = false;
+                    for (const prevText of state.duplicatePrevention) {
+                        if (isDuplicateText(processedText, prevText)) {
+                            isDuplicate = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isDuplicate) {
+                        state.tempText = processedText;
+                        state.lastProcessedText = processedText;
+                        
+                        state.duplicatePrevention.push(processedText);
+                        if (state.duplicatePrevention.length > 5) {
+                            state.duplicatePrevention.shift();
+                        }
+                        
+                        textarea.value = processedText;
+                    }
+                }
+            }
+        } else {
+            state.tempText = finalTranscript || interimTranscript;
+            if (state.tempText) {
+                textarea.value = state.tempText;
+            }
+        }
+    };
+    
+    recognition.onerror = function(event) {
+        console.error("Ошибка распознавания:", event.error);
+        const state = voiceStates.get(remarkId);
+        
+        if (event.error === 'no-speech') {
+            statusDiv.textContent = "Речь не обнаружена. Попробуйте снова";
+        } else if (event.error === 'audio-capture') {
+            statusDiv.textContent = "Микрофон недоступен";
+        } else if (event.error === 'not-allowed') {
+            statusDiv.textContent = "Доступ к микрофону запрещен";
+        } else {
+            statusDiv.textContent = "Ошибка: " + event.error;
+        }
+        
+        statusDiv.style.background = "#ffebee";
+        statusDiv.style.color = "#d32f2f";
+        statusDiv.classList.remove('recording');
+        
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        clearBtn.disabled = false;
+        
+        if (state) {
+            state.isRecording = false;
+        }
+        
+        recognitions.delete(remarkId);
+        textarea.classList.remove('text-replace-mode');
+    };
+    
+    recognition.onend = function() {
+        const state = voiceStates.get(remarkId);
+        if (!state) return;
+        
+        if (state.isRecording) {
+            setTimeout(() => {
+                if (state.isRecording && !recognitions.has(remarkId)) {
+                    try {
+                        recognition.start();
+                        return;
+                    } catch (e) {
+                        console.log("Не удалось перезапустить запись");
+                    }
+                }
+            }, 300);
+            return;
+        }
+        
+        state.isRecording = false;
+        
+        if (state.tempText && state.tempText.trim()) {
+            statusDiv.textContent = "Распознано. Выберите действие:";
+            statusDiv.style.background = "#e8f5e9";
+            statusDiv.style.color = "#2e7d32";
+            
+            replaceControls.style.display = 'flex';
+            
+            state.currentText = textarea.value;
+        } else {
+            statusDiv.style.display = 'none';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            clearBtn.disabled = false;
+        }
+        
+        statusDiv.classList.remove('recording');
+        textarea.classList.remove('text-replace-mode');
+        
+        recognitions.delete(remarkId);
+    };
+    
+    recognitions.set(remarkId, recognition);
+    
+    try {
+        recognition.start();
+    } catch (error) {
+        console.error("Ошибка запуска:", error);
+        statusDiv.textContent = "Не удалось начать распознавание";
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = "#ffebee";
+        statusDiv.style.color = "#d32f2f";
+        
+        if (state) {
+            state.isRecording = false;
+        }
+    }
+}
+
+function addToExistingText(remarkId) {
+    const textarea = document.getElementById(`description-${remarkId}`);
+    const state = voiceStates.get(remarkId);
+    const replaceControls = document.getElementById(`replace-controls-${remarkId}`);
+    
+    if (state && state.tempText) {
+        const currentText = state.currentText || '';
+        const newText = state.tempText.trim();
+        
+        if (currentText && newText) {
+            textarea.value = currentText + ' ' + newText;
+        } else if (newText) {
+            textarea.value = newText;
+        }
+        
+        state.currentText = textarea.value;
+        state.tempText = '';
+    }
+    
+    replaceControls.style.display = 'none';
+    
+    const statusDiv = document.getElementById(`status-${remarkId}`);
+    const startBtn = document.getElementById(`start-btn-${remarkId}`);
+    const stopBtn = document.getElementById(`stop-btn-${remarkId}`);
+    const clearBtn = document.getElementById(`clear-btn-${remarkId}`);
+    
+    statusDiv.style.display = 'none';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    clearBtn.disabled = false;
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+function replaceExistingText(remarkId) {
+    const textarea = document.getElementById(`description-${remarkId}`);
+    const state = voiceStates.get(remarkId);
+    const replaceControls = document.getElementById(`replace-controls-${remarkId}`);
+    
+    if (state && state.tempText) {
+        textarea.value = state.tempText.trim();
+        state.currentText = textarea.value;
+        state.tempText = '';
+    }
+    
+    replaceControls.style.display = 'none';
+    
+    const statusDiv = document.getElementById(`status-${remarkId}`);
+    const startBtn = document.getElementById(`start-btn-${remarkId}`);
+    const stopBtn = document.getElementById(`stop-btn-${remarkId}`);
+    const clearBtn = document.getElementById(`clear-btn-${remarkId}`);
+    
+    statusDiv.style.display = 'none';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    clearBtn.disabled = false;
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+function stopVoiceInput(remarkId){
+    const state = voiceStates.get(remarkId);
+    if (state) {
+        state.isRecording = false;
+    }
+    
+    if (recognitions.has(remarkId)) {
+        const recognition = recognitions.get(remarkId);
+        if (recognition) {
+            recognition.stop();
+        }
+        recognitions.delete(remarkId);
+    }
+    
+    const statusDiv = document.getElementById(`status-${remarkId}`);
+    const startBtn = document.getElementById(`start-btn-${remarkId}`);
+    const stopBtn = document.getElementById(`stop-btn-${remarkId}`);
+    const clearBtn = document.getElementById(`clear-btn-${remarkId}`);
+    const textarea = document.getElementById(`description-${remarkId}`);
+    const replaceControls = document.getElementById(`replace-controls-${remarkId}`);
+    
+    statusDiv.style.display = 'none';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    clearBtn.disabled = false;
+    replaceControls.style.display = 'none';
+    textarea.classList.remove('text-replace-mode');
+}
+
+function clearVoiceInput(remarkId){
+    const textarea = document.getElementById(`description-${remarkId}`);
+    textarea.value = '';
+    
+    const state = voiceStates.get(remarkId);
+    if (state) {
+        state.currentText = '';
+        state.tempText = '';
+        state.duplicatePrevention = [];
+    }
+    
+    if (autoSaveManager) {
+        autoSaveManager.pendingChanges = true;
+    }
+}
+
+// =================== ФУНКЦИИ ХЕШИРОВАНИЯ ===================
+/*
+💾 Сохранить в URL - сохраняет данные в адресную строку (хэш)
+Это позволяет поделиться ссылкой или восстановить данные при перезагрузке
+НО имеет ограничение по длине (примерно 2000 символов)
+Подходит только для небольших протоколов без фото
+*/
+
+function saveToHash() {
+    try {
+        const data = {
+            date: document.getElementById('date').value,
+            group: document.getElementById('group').value,
+            route: document.getElementById('route').value,
+            remarks: []
+        };
+        
+        const remarks = document.querySelectorAll('.remark');
+        remarks.forEach((remark, index) => {
+            const remarkId = remark.id;
+            const remarkNumber = index + 1;
+            
+            const description = document.getElementById(`description-${remarkId}`)?.value || '';
+            
+            const responsibleSelect = document.getElementById(`responsible-${remarkNumber}`);
+            const customResponsibleInput = document.getElementById(`custom-responsible-${remarkId}`);
+            let responsible = '';
+            if (responsibleSelect && responsibleSelect.value === "custom") {
+                responsible = customResponsibleInput?.value || '';
+            } else if (responsibleSelect) {
+                responsible = responsibleSelect.value || '';
+            }
+            
+            const locationSelect = document.getElementById(`location-${remarkId}`);
+            const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+            let location = '';
+            if (locationSelect && locationSelect.value === "custom") {
+                location = customLocationInput?.value || '';
+            } else if (locationSelect) {
+                location = locationSelect.value || '';
+            }
+            
+            const hasPhoto = remark.hasAttribute('data-photo-base64');
+            let photoData = null;
+            if (hasPhoto) {
+                const fullBase64 = remark.getAttribute('data-photo-base64');
+                photoData = fullBase64 ? fullBase64.split(',')[1] : null;
+            }
+            
+            data.remarks.push({
+                description,
+                responsible,
+                location,
+                hasPhoto: !!photoData,
+                photoData: photoData ? photoData.substring(0, 100) : null // Обрезаем фото для URL
+            });
+        });
+        
+        const jsonData = JSON.stringify(data);
+        const encodedData = btoa(encodeURIComponent(jsonData));
+        
+        window.location.hash = `#data=${encodedData}`;
+        
+        if (autoSaveManager) {
+            autoSaveManager.updateSaveStatus('🔗 Данные сохранены в URL', 'info');
+        }
+        
+        console.log('Данные сохранены в hash');
+    } catch (error) {
+        console.error('Ошибка при сохранении в hash:', error);
+        if (autoSaveManager) {
+            autoSaveManager.updateSaveStatus('❌ Ошибка сохранения в URL (слишком много данных)', 'error');
+        }
+    }
+}
+
+function loadFromHash() {
+    try {
+        const hash = window.location.hash;
+        if (!hash || !hash.includes('data=')) return;
+        
+        const encodedData = hash.split('data=')[1];
+        if (!encodedData) return;
+        
+        const jsonData = decodeURIComponent(atob(encodedData));
+        const data = JSON.parse(jsonData);
+        
+        if (data.date) document.getElementById('date').value = data.date;
+        if (data.group) document.getElementById('group').value = data.group;
+        if (data.route) document.getElementById('route').value = data.route;
+        
+        document.getElementById('remarks').innerHTML = '';
+        remarkCount = 0;
+        
+        if (data.remarks && data.remarks.length > 0) {
+            data.remarks.forEach((remarkData, index) => {
+                addRemark();
+                
+                const remarkId = `remark-${index + 1}`;
+                const remarkElement = document.getElementById(remarkId);
+                
+                if (remarkElement) {
+                    const descriptionField = document.getElementById(`description-${remarkId}`);
+                    if (descriptionField && remarkData.description) {
+                        descriptionField.value = remarkData.description;
+                    }
+                    
+                    const responsibleSelect = document.getElementById(`responsible-${index + 1}`);
+                    const customResponsibleInput = document.getElementById(`custom-responsible-${remarkId}`);
+                    if (responsibleSelect && remarkData.responsible) {
+                        const isStandard = Array.from(responsibleSelect.options).some(
+                            opt => opt.value === remarkData.responsible
+                        );
+                        
+                        if (isStandard) {
+                            responsibleSelect.value = remarkData.responsible;
+                        } else {
+                            responsibleSelect.value = 'custom';
+                            customResponsibleInput.style.display = 'block';
+                            customResponsibleInput.value = remarkData.responsible;
+                        }
+                    }
+                    
+                    const locationSelect = document.getElementById(`location-${remarkId}`);
+                    const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+                    if (locationSelect && remarkData.location) {
+                        updateLocationSelect(remarkId);
+                        
+                        setTimeout(() => {
+                            const isStandard = Array.from(locationSelect.options).some(
+                                opt => opt.value === remarkData.location
+                            );
+                            
+                            if (isStandard) {
+                                locationSelect.value = remarkData.location;
+                            } else {
+                                locationSelect.value = 'custom';
+                                customLocationInput.style.display = 'block';
+                                customLocationInput.value = remarkData.location;
+                            }
+                        }, 100);
+                    }
+                }
+            });
+        }
+        
+        console.log('Данные загружены из hash');
+    } catch (error) {
+        console.error('Ошибка при загрузке из hash:', error);
+    }
+}
+
+function clearHash() {
+    if (confirm('Вы уверены, что хотите очистить все данные в URL? Это действие нельзя отменить.')) {
+        window.location.hash = '';
+        location.reload();
+    }
+}
+
+// =================== ФУНКЦИИ ОФЛАЙН-ХРАНЕНИЯ ===================
+
+function updateOnlineStatus() {
+    const offlineBadge = document.getElementById('offlineBadge');
+    
+    if (navigator.onLine) {
+        offlineBadge.classList.remove('show');
+    } else {
+        offlineBadge.classList.add('show');
+    }
+}
+
+async function restoreLastProtocol() {
+    try {
+        const lastProtocol = await offlineStorage.loadLastProtocol();
+        if (lastProtocol) {
+            const shouldRestore = confirm(
+                `Найден несохраненный протокол от ${new Date(lastProtocol.savedAt).toLocaleString()}. Восстановить?`
+            );
+            
+            if (shouldRestore) {
+                loadProtocolData(lastProtocol);
+                if (autoSaveManager) {
+                    autoSaveManager.updateSaveStatus('✅ Протокол восстановлен', 'success');
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка восстановления:', error);
+    }
+}
+
+function loadProtocolData(protocol) {
+    document.getElementById('date').value = protocol.date || '';
+    document.getElementById('group').value = protocol.group || '';
+    document.getElementById('route').value = protocol.route || '';
+    
+    if (protocol.remarks && protocol.remarks.length > 0) {
+        document.getElementById('remarks').innerHTML = '';
+        remarkCount = 0;
+        
+        protocol.remarks.forEach((remarkData, index) => {
+            addRemark();
+            
+            const remarkId = `remark-${index + 1}`;
+            setTimeout(() => {
+                const descField = document.getElementById(`description-${remarkId}`);
+                if (descField && remarkData.description) {
+                    descField.value = remarkData.description;
+                }
+                
+                const responsibleSelect = document.getElementById(`responsible-${index + 1}`);
+                const customResponsibleInput = document.getElementById(`custom-responsible-${remarkId}`);
+                if (responsibleSelect && remarkData.responsible) {
+                    const isStandard = Array.from(responsibleSelect.options).some(
+                        opt => opt.value === remarkData.responsible
+                    );
+                    
+                    if (isStandard) {
+                        responsibleSelect.value = remarkData.responsible;
+                    } else {
+                        responsibleSelect.value = 'custom';
+                        customResponsibleInput.style.display = 'block';
+                        customResponsibleInput.value = remarkData.responsible;
+                    }
+                }
+                
+                const locationSelect = document.getElementById(`location-${remarkId}`);
+                const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+                if (locationSelect && remarkData.location) {
+                    updateLocationSelect(remarkId);
+                    
+                    setTimeout(() => {
+                        const isStandard = Array.from(locationSelect.options).some(
+                            opt => opt.value === remarkData.location
+                        );
+                        
+                        if (isStandard) {
+                            locationSelect.value = remarkData.location;
+                        } else {
+                            locationSelect.value = 'custom';
+                            customLocationInput.style.display = 'block';
+                            customLocationInput.value = remarkData.location;
+                        }
+                    }, 100);
+                }
+                
+                if (remarkData.photoData) {
+                    restorePhoto(remarkId, remarkData);
+                }
+            }, 100);
+        });
+    }
+    
+    if (autoSaveManager) {
+        autoSaveManager.currentProtocolId = protocol.id;
+        autoSaveManager.pendingChanges = false;
+    }
+}
+
+function restorePhoto(remarkId, remarkData) {
+    const remark = document.getElementById(remarkId);
+    const preview = document.getElementById(`photo-preview-${remarkId}`);
+    const photoActions = document.getElementById(`photo-actions-${remarkId}`);
+    const remarkNumber = remarkId.split('-')[1];
+    const photoBtn = document.getElementById(`photo-btn-${remarkNumber}`);
+    
+    if (remarkData.photoData) {
+        remark.setAttribute('data-photo-base64', remarkData.photoData);
+    }
+    if (remarkData.photoBlob) {
+        remark.setAttribute('data-photo-blob', remarkData.photoBlob);
+    }
+    
+    const img = document.createElement('img');
+    img.src = remarkData.photoData || remarkData.photoBlob;
+    img.alt = 'Фото';
+    img.style.maxWidth = '250px';
+    img.style.maxHeight = '200px';
+    img.style.objectFit = 'contain';
+    img.onclick = function() { zoomPhoto(this); };
+    
+    preview.innerHTML = '';
+    preview.appendChild(img);
+    photoActions.style.display = 'flex';
+    
+    if (photoBtn) {
+        photoBtn.textContent = '📷 Фото сделано';
+        photoBtn.disabled = true;
+    }
+}
+
+async function manualSave() {
+    if (autoSaveManager) {
+        await autoSaveManager.saveCurrentState();
+    }
+}
+
+async function showBackups() {
+    try {
+        const protocols = await offlineStorage.getAllProtocols();
+        const backupList = document.getElementById('backupList');
+        
+        if (protocols.length === 0) {
+            backupList.innerHTML = '<div style="text-align:center; padding:20px;">Нет сохраненных протоколов</div>';
+        } else {
+            backupList.innerHTML = protocols
+                .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt))
+                .map(p => `
+                    <div class="backup-item" onclick="loadBackup('${p.id}')">
+                        <div class="date">${new Date(p.savedAt).toLocaleString()}</div>
+                        <div class="stats">
+                            Маршрут: ${p.route || 'Не указан'}<br>
+                            Замечаний: ${p.remarks?.length || 0}
+                        </div>
+                    </div>
+                `).join('');
+        }
+        
+        document.getElementById('historyModal').style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки истории:', error);
+        alert('Ошибка загрузки истории');
+    }
+}
+
+async function loadBackup(protocolId) {
+    try {
+        const protocol = await offlineStorage.getProtocolWithPhotos(protocolId);
+        loadProtocolData(protocol);
+        closeHistoryModal();
+        if (autoSaveManager) {
+            autoSaveManager.updateSaveStatus('✅ Протокол загружен из истории', 'success');
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки протокола:', error);
+        alert('Ошибка загрузки протокола');
+    }
+}
+
+async function clearHistory() {
+    if (confirm('Вы уверены, что хотите очистить всю историю протоколов? Это действие нельзя отменить.')) {
+        try {
+            await offlineStorage.clearAllProtocols();
+            if (autoSaveManager) {
+                autoSaveManager.currentProtocolId = null;
+                autoSaveManager.updateSaveStatus('🗑️ История очищена', 'info');
+            }
+            closeHistoryModal();
+        } catch (error) {
+            console.error('Ошибка очистки истории:', error);
+            alert('Ошибка при очистке истории');
+        }
+    }
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
+
+// =================== ЭКСПОРТ В EXCEL ===================
+
+async function exportExcelWithImages() {
+    const date = document.getElementById("date").value || new Date().toISOString().split('T')[0];
+    const group = document.getElementById("group").value || "Не указана";
+    const route = document.getElementById("route").value || "Не указан";
+    
+    document.getElementById('loading').style.display = 'flex';
+    
+    try {
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Чек-лист обхода';
+        workbook.created = new Date();
+        
+        const worksheet = workbook.addWorksheet('Протокол');
+        
+        worksheet.mergeCells('A1:G1');
+        const titleRow = worksheet.getRow(1);
+        titleRow.getCell(1).value = `Протокол обхода от ${date}`;
+        titleRow.getCell(1).font = { size: 16, bold: true, color: { argb: 'FF001355' } };
+        titleRow.getCell(1).alignment = { horizontal: 'center' };
+        titleRow.height = 25;
+        
+        worksheet.mergeCells('A2:G2');
+        const protocolRow = worksheet.getRow(2);
+        protocolRow.getCell(1).value = `В соответствии с приказом № 07 от 13.02.2025 г. комиссией (${group}), Маршрут: ${route}`;
+        protocolRow.getCell(1).font = { size: 11 };
+        protocolRow.getCell(1).alignment = { horizontal: 'left', wrapText: true };
+        protocolRow.height = 40;
+        
+        worksheet.getRow(3).height = 10;
+        worksheet.getRow(4).height = 10;
+        worksheet.getRow(5).height = 10;
+        worksheet.getRow(6).height = 10;
+        worksheet.getRow(7).height = 10;
+        
+        worksheet.getRow(8).values = ['№', 'Фото', 'Описание', 'Ответственный', 'Место обнаружения', 'Срок устранения', 'Статус'];
+        const headerRow = worksheet.getRow(8);
+        headerRow.font = { bold: true };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFE9ECF3' }
+        };
+        headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+        headerRow.height = 30;
+        
+        worksheet.columns = [
+            { width: 8 },   // №
+            { width: 45 },  // Фото
+            { width: 50 },  // Описание
+            { width: 25 },  // Ответственный
+            { width: 25 },  // Место обнаружения
+            { width: 20 },  // Срок устранения
+            { width: 20 }   // Статус
+        ];
+        
+        const statusOptions = ['Выполнено', 'В работе', 'Не рассмотрено', 'Отклонено'];
+        
+        const remarks = document.querySelectorAll(".remark");
+        let currentRow = 9;
+        
+        for (let i = 0; i < remarks.length; i++) {
+            const remark = remarks[i];
+            const remarkId = remark.id;
+            const remarkNumber = i + 1;
+            
+            const desc = document.getElementById(`description-${remarkId}`)?.value || "(нет описания)";
+            const sel = document.getElementById(`responsible-${remarkNumber}`);
+            const customInput = document.getElementById(`custom-responsible-${remarkId}`);
+            const resp = sel && sel.value === "custom" ? (customInput?.value || "Не указан") : (sel?.value || "Не указан");
+            
+            const locationSelect = document.getElementById(`location-${remarkId}`);
+            const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
+            let location = "";
+            if (locationSelect && locationSelect.value === "custom") {
+                location = customLocationInput?.value || "";
+            } else if (locationSelect) {
+                location = locationSelect.value || "";
+            }
+            
+            const hasPhoto = remark.hasAttribute('data-photo-blob');
+            
+            const row = worksheet.getRow(currentRow);
+            row.getCell(1).value = remarkNumber;
+            row.getCell(3).value = desc;
+            row.getCell(4).value = resp;
+            row.getCell(5).value = location;
+            row.getCell(6).value = "";
+            row.getCell(7).value = "Не рассмотрено";
+            
+            for (let col = 1; col <= 7; col++) {
+                const cell = row.getCell(col);
+                if (col !== 3) {
+                    cell.alignment = { 
+                        horizontal: 'center', 
+                        vertical: 'middle',
+                        wrapText: true
+                    };
+                } else {
+                    cell.alignment = { 
+                        vertical: 'top',
+                        wrapText: true
+                    };
+                }
+            }
+            
+            const statusCell = row.getCell(7);
+            
+            statusCell.dataValidation = {
+                type: 'list',
+                allowBlank: false,
+                formulae: [`"${statusOptions.join(',')}"`],
+                showErrorMessage: true,
+                errorStyle: 'warning',
+                errorTitle: 'Некорректный статус',
+                error: 'Выберите значение из списка: Выполнено, В работе, Не рассмотрено, Отклонено'
+            };
+            
+            const statusColumnLetter = 'G';
+            
+            worksheet.addConditionalFormatting({
+                ref: `${statusColumnLetter}${currentRow}`,
+                rules: [
+                    {
+                        type: 'containsText',
+                        operator: 'containsText',
+                        text: 'Выполнено',
+                        style: {
+                            fill: {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: { argb: 'FFC6EFCE' }
+                            },
+                            font: {
+                                color: { argb: 'FF006100' },
+                                bold: true
+                            }
+                        }
+                    }
+                ]
+            });
+            
+            worksheet.addConditionalFormatting({
+                ref: `${statusColumnLetter}${currentRow}`,
+                rules: [
+                    {
+                        type: 'containsText',
+                        operator: 'containsText',
+                        text: 'В работе',
+                        style: {
+                            fill: {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: { argb: 'FFFFEB9C' }
+                            },
+                            font: {
+                                color: { argb: 'FF9C5700' },
+                                bold: true
+                            }
+                        }
+                    }
+                ]
+            });
+            
+            worksheet.addConditionalFormatting({
+                ref: `${statusColumnLetter}${currentRow}`,
+                rules: [
+                    {
+                        type: 'containsText',
+                        operator: 'containsText',
+                        text: 'Отклонено',
+                        style: {
+                            fill: {
+                                type: 'pattern',
+                                pattern: 'solid',
+                                fgColor: { argb: 'FFF2F2F2' }
+                            },
+                            font: {
+                                color: { argb: 'FF7F7F7F' },
+                                bold: true
+                            }
+                        }
+                    }
+                ]
+            });
+            
+            if (hasPhoto) {
+                const photoBlob = remark.getAttribute('data-photo-blob');
+                
+                try {
+                    const base64Data = photoBlob.split(',')[1];
+                    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+                    
+                    const originalWidth = parseInt(remark.getAttribute('data-photo-width')) || 0;
+                    const originalHeight = parseInt(remark.getAttribute('data-photo-height')) || 0;
+                    
+                    const imageId = workbook.addImage({
+                        buffer: imageBuffer,
+                        extension: 'jpeg'
+                    });
+                    
+                    const maxCellWidth = 300;
+                    const maxCellHeight = 400;
+                    
+                    let targetWidth = originalWidth;
+                    let targetHeight = originalHeight;
+                    
+                    if (originalWidth > 0 && originalHeight > 0) {
+                        const widthRatio = maxCellWidth / originalWidth;
+                        const heightRatio = maxCellHeight / originalHeight;
+                        const scaleRatio = Math.min(widthRatio, heightRatio);
+                        
+                        targetWidth = Math.round(originalWidth * scaleRatio);
+                        targetHeight = Math.round(originalHeight * scaleRatio);
+                    } else {
+                        targetWidth = 300;
+                        targetHeight = 200;
+                    }
+                    
+                    const excelRowHeight = Math.max(120, Math.round(targetHeight * 0.75) + 20);
+                    row.height = excelRowHeight;
+                    
+                    const cellWidthPixels = 45 * 7;
+                    const cellHeightPixels = excelRowHeight * 0.75;
+                    const offsetX = Math.max(0, Math.round((cellWidthPixels - targetWidth) / 2));
+                    const offsetY = Math.max(0, Math.round((cellHeightPixels - targetHeight) / 2));
+                    
+                    worksheet.addImage(imageId, {
+                        tl: { col: 1, row: currentRow - 1, offsetX: offsetX, offsetY: offsetY },
+                        ext: { width: targetWidth, height: targetHeight }
+                    });
+                    
+                    row.getCell(2).value = "";
+                    
+                } catch (error) {
+                    console.error("Ошибка при добавлении фото:", error);
+                    row.getCell(2).value = "Ошибка фото";
+                    row.getCell(2).alignment = { 
+                        vertical: 'middle', 
+                        horizontal: 'center' 
+                    };
+                }
+            } else {
+                row.getCell(2).value = "Нет фото";
+                row.getCell(2).alignment = { 
+                    vertical: 'middle', 
+                    horizontal: 'center' 
+                };
+            }
+            
+            currentRow++;
+        }
+        
+        for (let i = 8; i < currentRow; i++) {
+            const row = worksheet.getRow(i);
+            for (let j = 1; j <= 7; j++) {
+                const cell = row.getCell(j);
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FF001355' } },
+                    left: { style: 'thin', color: { argb: 'FF001355' } },
+                    bottom: { style: 'thin', color: { argb: 'FF001355' } },
+                    right: { style: 'thin', color: { argb: 'FF001355' } }
+                };
+            }
+        }
+        
+        worksheet.views = [
+            { state: 'normal', showGridLines: true }
+        ];
+        
+        const fileName = `Протокол_обхода_${date}_${group.replace(/\s+/g, '_')}.xlsx`;
+        
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        saveAs(blob, fileName);
+        
+        document.getElementById('loading').style.display = 'none';
+        
+        if (autoSaveManager) {
+            autoSaveManager.updateSaveStatus(`✅ Протокол "${fileName}" успешно сохранен`, 'success');
+        }
+        
+        alert(`Протокол "${fileName}" успешно сохранен.\nВсего замечаний: ${remarks.length}\n\nЯчейки "Статус" имеют цветовое кодирование:\n• Выполнено - зелёный\n• В работе - жёлтый\n• Отклонено - серый\n• Не рассмотрено - без цвета`);
+        
+    } catch (error) {
+        console.error("Ошибка при создании Excel:", error);
+        document.getElementById('loading').style.display = 'none';
+        
+        if (autoSaveManager) {
+            if (!navigator.onLine) {
+                autoSaveManager.updateSaveStatus('❌ Вы в офлайн-режиме. Экспорт недоступен', 'error');
+            } else {
+                autoSaveManager.updateSaveStatus('❌ Ошибка при создании файла', 'error');
+            }
+        }
+        
+        if (!navigator.onLine) {
+            alert("Вы находитесь в офлайн-режиме. Экспорт в Excel недоступен. Данные сохранены локально.");
+        } else {
+            alert("Произошла ошибка при создании файла. Пожалуйста, попробуйте еще раз.");
+        }
+    }
+}
+
+// Очистка при закрытии
+window.addEventListener('beforeunload', function() {
+    recognitions.forEach((recognition) => {
+        if (recognition) {
+            recognition.stop();
+        }
+    });
+});
+
+// Загружаем данные из hash при загрузке страницы
+loadFromHash();
+</script>
+
+</body>
+</html>
