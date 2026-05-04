@@ -570,13 +570,19 @@ video{
             <input type="date" id="date" value="">
         </div>
         <div>
-            <label>Группа</label>
+            <label>Направление обхода</label>
             <select id="group">
-                <option>Группа 1</option>
-                <option>Группа 2</option>
-                <option>Группа 3</option>
-                <option>Группа 4</option>
-                <option>Группа 5</option>
+                <option>ОТ и ТБ</option>
+                <option>Инфраструктура</option>
+                <option>Санитарное состояние</option>
+                <option>Электробезопасность</option>
+                <option>Оборудование</option>
+                <option>5S</option>
+                <option>Инфостенды</option>
+                <option>Хранение ГП</option>
+                <option>Хранение отходов</option>
+                       <option>Хранение сырья</option>
+                       <option>ИСМ</option>
             </select>
         </div>
         <div>
@@ -587,10 +593,10 @@ video{
                 <option>Участок НСИ</option>
                 <option>Складской комплекс</option>
                 <option>Транспортный цех</option>
-      <option>Участок переработки полимеров</option>
-      <option>ОТК и ИЛ</option>
-      <option>РМЦ</option>
- <option>Котельная</option>
+                <option>Участок переработки полимеров</option>
+                <option>ОТК и ИЛ</option>
+                <option>РМЦ</option>
+                <option>Котельная</option>
             </select>
         </div>
     </div>
@@ -1325,13 +1331,26 @@ function addRemark(){
 
             <label>Ответственный</label>
             <select id="responsible-${remarkCount}" onchange="toggleCustomInput(this, '${remarkId}'); onFieldChange()">
-                <option>Новиков В.В.</option>
-                <option>Свинин Э.Е.</option>
-                <option>Тимофеев А.В.</option>
-                <option>Савранов А.В.</option>
-                <option>Эпов Д.В.</option>
-                <option>Мосин А.Н.</option>
-                <option>Трубачев Ю.А.</option>
+                <option>Лозовенко В.И.</option>
+                <option>Карасиков М.А.</option>
+                <option>Шевчук Е.Ю.</option>
+                <option>Гузенко С.П.</option>
+                <option>Батищев Ю.А.</option>
+                <option>Фомина Е.С.</option>
+                <option>Абрамов С.Н.</option>
+  <option>Матва Е.С.</option>
+                <option>Шевяков Е.Ю.</option>
+                <option>Лебедьков Н.П.</option>
+                <option>Нач.смены склада</option>
+                <option>Черняков А.А.</option>
+                <option>Ст.кладовщик Сырья и материалов</option>
+                <option>Бородина С.Д.</option>
+ <option>Швец С.Г.</option>
+                <option>Начальник смены УГТ</option>
+                <option>Кириенко Ю.Г.</option>
+                <option>Викол А.С.</option>
+                <option>Хадыкина Н.А.</option>
+                        
                 <option value="custom">Другие</option>
             </select>
             <input id="custom-responsible-${remarkId}" placeholder="Ввести вручную" style="display:none; margin-top:5px;" onchange="onFieldChange()">
