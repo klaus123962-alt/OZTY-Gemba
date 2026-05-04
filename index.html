@@ -570,19 +570,13 @@ video{
             <input type="date" id="date" value="">
         </div>
         <div>
-            <label>Направление обхода</label>
+            <label>Группа</label>
             <select id="group">
-                <option>ОТ и ТБ</option>
-                <option>Инфраструктура</option>
-                <option>Санитарное состояние</option>
-                <option>Электробезопасность</option>
-                <option>Оборудование</option>
-                <option>5S</option>
-                <option>Инфостенды</option>
-                <option>Хранение ГП</option>
-                <option>Хранение отходов</option>
-                       <option>Хранение сырья</option>
-                       <option>ИСМ</option>
+                <option>Группа 1</option>
+                <option>Группа 2</option>
+                <option>Группа 3</option>
+                <option>Группа 4</option>
+                <option>Группа 5</option>
             </select>
         </div>
         <div>
@@ -593,10 +587,10 @@ video{
                 <option>Участок НСИ</option>
                 <option>Складской комплекс</option>
                 <option>Транспортный цех</option>
-                <option>Участок переработки полимеров</option>
-                <option>ОТК и ИЛ</option>
-                <option>РМЦ</option>
-                <option>Котельная</option>
+      <option>Участок переработки полимеров</option>
+      <option>ОТК и ИЛ</option>
+      <option>РМЦ</option>
+ <option>Котельная</option>
             </select>
         </div>
     </div>
@@ -695,6 +689,21 @@ const recognitions = new Map();
 const voiceStates = new Map();
 const flashStates = new Map();
 let cameraActive = false; // Флаг для отслеживания активности камеры
+
+// Направления обхода
+const DIRECTIONS = [
+    'ОТ и ТБ',
+    'Инфраструктура',
+    'Санитарное состояние',
+    'Электробезопасность',
+    'Оборудование',
+    '5S',
+    'Инфостенды',
+    'Хранение ГП',
+    'Хранение отходов',
+    'Хранение сырья',
+    'ИСМ'
+];
 
 // Класс для работы с IndexedDB
 class OfflineStorage {
@@ -1023,11 +1032,15 @@ class AutoSaveManager {
                 location = locationSelect.value || '';
             }
             
+            const directionSelect = document.getElementById(`direction-${remarkId}`);
+            const direction = directionSelect?.value || '';
+            
             const remarkData = {
                 index: index,
                 description: description,
                 responsible: responsible,
                 location: location,
+                direction: direction,
                 photoData: remark.getAttribute('data-photo-base64'),
                 photoBlob: remark.getAttribute('data-photo-blob')
             };
@@ -1146,30 +1159,17 @@ function closeRemark(button){
 }
 
 function updateLocationSelect(remarkId) {
-    const routeSelect = document.getElementById('route');
     const locationSelect = document.getElementById(`location-${remarkId}`);
     const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
     
     if (!locationSelect) return;
     
-    const selectedRoute = routeSelect.value;
-    let options = [];
-    
-    if (selectedRoute.includes("Маршрут 1 — Складской комплекс первой территории")) {
-        options = ['Сектор 1', 'Сектор 2', 'Сектор 3', 'Сектор 4', 'Сектор 5', 'Сектор 6', 'Сектор 7', 'Сектор 8'];
-    } else if (selectedRoute.includes("Маршрут 2 — ЦПТ( Сектора с 10 по 15)")) {
-        options = ['Сектор 10', 'Сектор 11', 'Сектор 12', 'Сектор 13', 'Сектор 14', 'Сектор 15'];
-    } else if (selectedRoute.includes("Маршрут 3 — АБК, ИЛ, ОТК, ТС, СГЭ - первой площадки")) {
-        options = ['АБК', 'ИЛ', 'ОТК', 'ТС', 'СГЭ'];
-    } else if (selectedRoute.includes("Маршрут 4 — Складской комплекс второй территории")) {
-        options = ['Сектор 1', 'Сектор 2', 'Сектор 3', 'Сектор 4', 'Сектор 5', 'Сектор 6', 'Сектор 7', 'Сектор 8', 'Сектор 9'];
-    } else if (selectedRoute.includes("Маршрут 5 — УПАТ,УПИТ,УПНИ")) {
-        options = ['УПАТ', 'УПИТ', 'УПНИ'];
-    }
-    
     const currentValue = locationSelect.value;
     
     locationSelect.innerHTML = '';
+    
+    // Фиксированный список мест обнаружения
+    const options = ['Территория возле КПП', 'Склад ТМЦ'];
     
     options.forEach(option => {
         const opt = document.createElement('option');
@@ -1178,16 +1178,17 @@ function updateLocationSelect(remarkId) {
         locationSelect.appendChild(opt);
     });
     
+    // Добавляем опцию "Другие"
     const customOpt = document.createElement('option');
     customOpt.value = 'custom';
-    customOpt.textContent = 'Ввести вручную';
+    customOpt.textContent = 'Другие';
     locationSelect.appendChild(customOpt);
     
+    // Восстанавливаем предыдущее значение если оно есть в списке
     if (currentValue && options.includes(currentValue)) {
         locationSelect.value = currentValue;
-    }
-    
-    if (locationSelect.value === 'custom') {
+    } else if (currentValue === 'custom') {
+        locationSelect.value = 'custom';
         customLocationInput.style.display = 'block';
     } else {
         customLocationInput.style.display = 'none';
@@ -1337,29 +1338,36 @@ function addRemark(){
                 <option>Гузенко С.П.</option>
                 <option>Батищев Ю.А.</option>
                 <option>Фомина Е.С.</option>
+                <option>Матва Е.С.</option>
                 <option>Абрамов С.Н.</option>
-  <option>Матва Е.С.</option>
                 <option>Шевяков Е.Ю.</option>
+                <option>Мирцхулава Ю.А.</option>
                 <option>Лебедьков Н.П.</option>
                 <option>Нач.смены склада</option>
                 <option>Черняков А.А.</option>
                 <option>Ст.кладовщик Сырья и материалов</option>
                 <option>Бородина С.Д.</option>
- <option>Швец С.Г.</option>
+                <option>Швец С.Г.</option>
                 <option>Начальник смены УГТ</option>
                 <option>Кириенко Ю.Г.</option>
-                <option>Викол А.С.</option>
+                <option>Викол А,С.</option>
                 <option>Хадыкина Н.А.</option>
-                        
                 <option value="custom">Другие</option>
             </select>
             <input id="custom-responsible-${remarkId}" placeholder="Ввести вручную" style="display:none; margin-top:5px;" onchange="onFieldChange()">
 
             <label>Место обнаружения</label>
             <select id="location-${remarkId}" onchange="toggleCustomLocation(this, '${remarkId}'); onFieldChange()">
-                <!-- Опции будут заполнены автоматически -->
+                <option>Территория возле КПП</option>
+                <option>Склад ТМЦ</option>
+                <option value="custom">Другие</option>
             </select>
             <input id="custom-location-${remarkId}" placeholder="Ввести вручную" style="display:none; margin-top:5px;" onchange="onFieldChange()">
+
+            <label>Направление обхода</label>
+            <select id="direction-${remarkId}" onchange="onFieldChange()">
+                ${DIRECTIONS.map(dir => `<option>${dir}</option>`).join('')}
+            </select>
 
         </div>
     `;
@@ -1369,8 +1377,6 @@ function addRemark(){
     // Инициализация камеры ТОЛЬКО при добавлении замечания
     initCamera(remarkCount);
     
-    updateLocationSelect(remarkId);
-    
     flashStates.set(remarkId, false);
     
     if (autoSaveManager) {
@@ -1379,12 +1385,6 @@ function addRemark(){
 }
 
 document.getElementById('route').addEventListener('change', function() {
-    for (let i = 1; i <= remarkCount; i++) {
-        const remarkId = `remark-${i}`;
-        if (document.getElementById(remarkId)) {
-            updateLocationSelect(remarkId);
-        }
-    }
     onFieldChange();
 });
 
@@ -1922,6 +1922,9 @@ function saveToHash() {
                 location = locationSelect.value || '';
             }
             
+            const directionSelect = document.getElementById(`direction-${remarkId}`);
+            const direction = directionSelect?.value || '';
+            
             const hasPhoto = remark.hasAttribute('data-photo-base64');
             let photoData = null;
             if (hasPhoto) {
@@ -1933,6 +1936,7 @@ function saveToHash() {
                 description,
                 responsible,
                 location,
+                direction,
                 hasPhoto: !!photoData,
                 photoData: photoData ? photoData.substring(0, 100) : null // Обрезаем фото для URL
             });
@@ -2006,8 +2010,6 @@ function loadFromHash() {
                     const locationSelect = document.getElementById(`location-${remarkId}`);
                     const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
                     if (locationSelect && remarkData.location) {
-                        updateLocationSelect(remarkId);
-                        
                         setTimeout(() => {
                             const isStandard = Array.from(locationSelect.options).some(
                                 opt => opt.value === remarkData.location
@@ -2021,6 +2023,11 @@ function loadFromHash() {
                                 customLocationInput.value = remarkData.location;
                             }
                         }, 100);
+                    }
+                    
+                    const directionSelect = document.getElementById(`direction-${remarkId}`);
+                    if (directionSelect && remarkData.direction) {
+                        directionSelect.value = remarkData.direction;
                     }
                 }
             });
@@ -2109,8 +2116,6 @@ function loadProtocolData(protocol) {
                 const locationSelect = document.getElementById(`location-${remarkId}`);
                 const customLocationInput = document.getElementById(`custom-location-${remarkId}`);
                 if (locationSelect && remarkData.location) {
-                    updateLocationSelect(remarkId);
-                    
                     setTimeout(() => {
                         const isStandard = Array.from(locationSelect.options).some(
                             opt => opt.value === remarkData.location
@@ -2124,6 +2129,11 @@ function loadProtocolData(protocol) {
                             customLocationInput.value = remarkData.location;
                         }
                     }, 100);
+                }
+                
+                const directionSelect = document.getElementById(`direction-${remarkId}`);
+                if (directionSelect && remarkData.direction) {
+                    directionSelect.value = remarkData.direction;
                 }
                 
                 if (remarkData.photoData) {
@@ -2255,14 +2265,14 @@ async function exportExcelWithImages() {
         
         const worksheet = workbook.addWorksheet('Протокол');
         
-        worksheet.mergeCells('A1:G1');
+        worksheet.mergeCells('A1:H1');
         const titleRow = worksheet.getRow(1);
         titleRow.getCell(1).value = `Протокол обхода от ${date}`;
         titleRow.getCell(1).font = { size: 16, bold: true, color: { argb: 'FF001355' } };
         titleRow.getCell(1).alignment = { horizontal: 'center' };
         titleRow.height = 25;
         
-        worksheet.mergeCells('A2:G2');
+        worksheet.mergeCells('A2:H2');
         const protocolRow = worksheet.getRow(2);
         protocolRow.getCell(1).value = `В соответствии с приказом № 07 от 13.02.2025 г. комиссией (${group}), Маршрут: ${route}`;
         protocolRow.getCell(1).font = { size: 11 };
@@ -2275,7 +2285,7 @@ async function exportExcelWithImages() {
         worksheet.getRow(6).height = 10;
         worksheet.getRow(7).height = 10;
         
-        worksheet.getRow(8).values = ['№', 'Фото', 'Описание', 'Ответственный', 'Место обнаружения', 'Срок устранения', 'Статус'];
+        worksheet.getRow(8).values = ['№', 'Фото', 'Описание', 'Ответственный', 'Место обнаружения', 'Направление обхода', 'Срок устранения', 'Статус'];
         const headerRow = worksheet.getRow(8);
         headerRow.font = { bold: true };
         headerRow.fill = {
@@ -2292,6 +2302,7 @@ async function exportExcelWithImages() {
             { width: 50 },  // Описание
             { width: 25 },  // Ответственный
             { width: 25 },  // Место обнаружения
+            { width: 25 },  // Направление обхода
             { width: 20 },  // Срок устранения
             { width: 20 }   // Статус
         ];
@@ -2320,6 +2331,9 @@ async function exportExcelWithImages() {
                 location = locationSelect.value || "";
             }
             
+            const directionSelect = document.getElementById(`direction-${remarkId}`);
+            const direction = directionSelect?.value || "";
+            
             const hasPhoto = remark.hasAttribute('data-photo-blob');
             
             const row = worksheet.getRow(currentRow);
@@ -2327,10 +2341,11 @@ async function exportExcelWithImages() {
             row.getCell(3).value = desc;
             row.getCell(4).value = resp;
             row.getCell(5).value = location;
-            row.getCell(6).value = "";
-            row.getCell(7).value = "Не рассмотрено";
+            row.getCell(6).value = direction;
+            row.getCell(7).value = "";
+            row.getCell(8).value = "Не рассмотрено";
             
-            for (let col = 1; col <= 7; col++) {
+            for (let col = 1; col <= 8; col++) {
                 const cell = row.getCell(col);
                 if (col !== 3) {
                     cell.alignment = { 
@@ -2346,7 +2361,7 @@ async function exportExcelWithImages() {
                 }
             }
             
-            const statusCell = row.getCell(7);
+            const statusCell = row.getCell(8);
             
             statusCell.dataValidation = {
                 type: 'list',
@@ -2358,7 +2373,7 @@ async function exportExcelWithImages() {
                 error: 'Выберите значение из списка: Выполнено, В работе, Не рассмотрено, Отклонено'
             };
             
-            const statusColumnLetter = 'G';
+            const statusColumnLetter = 'H';
             
             worksheet.addConditionalFormatting({
                 ref: `${statusColumnLetter}${currentRow}`,
@@ -2495,7 +2510,7 @@ async function exportExcelWithImages() {
         
         for (let i = 8; i < currentRow; i++) {
             const row = worksheet.getRow(i);
-            for (let j = 1; j <= 7; j++) {
+            for (let j = 1; j <= 8; j++) {
                 const cell = row.getCell(j);
                 cell.border = {
                     top: { style: 'thin', color: { argb: 'FF001355' } },
